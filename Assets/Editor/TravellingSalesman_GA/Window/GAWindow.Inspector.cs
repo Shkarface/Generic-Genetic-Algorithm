@@ -73,7 +73,7 @@ namespace KurdifyEditor.GA
                     rowRect.y += 23;
                 }
                 rowRect.y += 2;
-                GUI.Label(new Rect(rowRect), "Graph"); rowRect.y += 20;
+                GUI.Label(new Rect(rowRect), $"Graph - {Data.BestLocalDistance}m"); rowRect.y += 20;
                 NextY = rowRect.y;
                 float graphWidth = InspectorRect.width - rightOffset;
                 float graphHeight = graphWidth * 0.75f;
@@ -83,29 +83,54 @@ namespace KurdifyEditor.GA
                 Drawing.DrawLine(new Vector2(r.x, r.y + r.height), new Vector2(r.x + r.width, r.y + r.height), Color.black, 2, false);
 
                 Texture2D circle = DotCircle;
-                for (int index = 0; index < Data.Points.Length; index++)
-                {
-                    Vector2 currentPoint = Data.Points[index];
 
-                    var pointPos = new Vector2
-                        (
-                            (r.x - 2) + ((currentPoint.x / Data.MaxPoint.x) * (graphWidth * 0.9f)),
-                            (r.y + r.height - 2) - ((currentPoint.y / Data.MaxPoint.y) * (graphHeight * 0.9f))
-                        );
+                for (int i = 0; i < Data.Points.Length; i++)
+                {
+                    int index= Data.BestLocalPath[i];
+                    int nextIndex = (i==Data.Points.Length-1)? Data.BestLocalPath[0] : Data.BestLocalPath[i+1];
+                    if (index >= Data.Points.Length || nextIndex >= Data.Points.Length)
+                    {
+                        Data.Validate();
+                        return;
+                    }
+                    Vector2 currentPoint = Data.Points[index];
+                    Vector2 nextPoint = Data.Points[nextIndex];
 
                     float pointSize = 4.0F * (graphWidth / 200f);
                     float halfPoint = pointSize / 2f;
+
+                    var pointPos = new Vector2
+                        (
+                            (r.x - halfPoint) + ((currentPoint.x / Data.MaxPoint.x) * (graphWidth * 0.9f)),
+                            (r.y + r.height - halfPoint) - ((currentPoint.y / Data.MaxPoint.y) * (graphHeight * 0.9f))
+                        );
+                    var nextPointPos = new Vector2
+                                    (
+                                        (r.x - halfPoint) + ((nextPoint.x / Data.MaxPoint.x) * (graphWidth * 0.9f)),
+                                        (r.y + r.height - halfPoint) - ((nextPoint.y / Data.MaxPoint.y) * (graphHeight * 0.9f))
+                                    );
+
+                    
+
+                    Rect pointRect = new Rect(pointPos.x, pointPos.y, pointSize, pointSize);
+                    Rect nextPointRect = new Rect(nextPointPos.x, nextPointPos.y, pointSize, pointSize);
+
+                    Vector2 lineStartPos = pointRect.center;// + (Vector2.one * 2);
+                    Vector2 lineEndPos = nextPointRect.center;// + (Vector2.one * 2);
+
+                    Drawing.DrawLine(lineStartPos, lineEndPos, Color.gray, 1, true);
+
                     if (circle)
                     {
                         var oldColor = GUI.color;
                         if (!EditorGUIUtility.isProSkin)
                             GUI.color = Color.black;
-                        GUI.DrawTexture(new Rect(pointPos.x, pointPos.y, pointSize, pointSize), circle);
+                        GUI.DrawTexture(pointRect, circle);
                         GUI.color = oldColor;
                     }
-                    else GUI.Box(new Rect(pointPos.x - halfPoint, pointPos.y - halfPoint, pointSize, pointSize), "");
+                    else GUI.Box(pointRect, "");
 
-                    GUI.Label(new Rect(pointPos.x - 50, pointPos.y - 20, 100, 20), $"#{index} {currentPoint}", LabelMiddleCenter);
+                    GUI.Label(new Rect(pointPos.x - 75, pointPos.y - 20, 150, 20), $"#{i}_{index} {currentPoint}", LabelMiddleCenter);
                 }
 
 

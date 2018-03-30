@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿#define USE_LOCAL_BEST
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
@@ -24,6 +25,8 @@ namespace KurdifyEngine.GA
         public int Elitism = 5;
         public float MutationRate = .1f;
         public Vector2[] Points = new Vector2[3] { Vector2.zero, Vector2.one, new Vector2(0, 1) };
+        public int[] BestLocalPath;
+        public double BestLocalDistance;
         public List<Generation<int>> Generations
         {
             get
@@ -228,6 +231,63 @@ namespace KurdifyEngine.GA
             Population = Math.Max(Population, 3);
             if (((Population) % 2) == 1)
                 Population++;
+
+            BestLocalPath = new int[Points.Length];
+            bool[] pointDone = new bool[Points.Length];
+            BestLocalPath[0] = 0;
+            pointDone[0] = true;
+            BestLocalDistance = 0;
+
+            #region Local Best
+#if USE_LOCAL_BEST
+            int count = 0;
+            int i = 0;
+            while (count < Points.Length)
+            {
+                int nextPoint = 1;
+                float dist = -1;
+                for (int j = 1; j < Points.Length; j++)
+                {
+                    if (i == j || pointDone[j]) continue;
+                    int localNextPoint = j;
+                    float localDist = Vector2.Distance(Points[i], Points[localNextPoint]);
+                    if (localDist < dist || dist == -1)
+                    {
+                        dist = localDist;
+                        nextPoint = localNextPoint;
+                    }
+                }
+
+                BestLocalDistance += dist;
+                pointDone[nextPoint] = true;
+                BestLocalPath[count] = nextPoint;
+                i = nextPoint;
+                count++;
+            }
+            BestLocalDistance += Vector2.Distance(Points[BestLocalPath[0]], Points[BestLocalPath[BestLocalPath.Length - 1]]);
+#endif
+            #endregion
+        }
+        public float FindPathDistance(int[] path)
+        {
+            string s = "";
+            float localDistance = 0f;
+            for (int i = 0; i < Points.Length; i++)
+            {
+                if (i == Points.Length - 1)
+                {
+                    localDistance += Vector2.Distance(Points[path[i]], Points[path[0]]);
+                    s += $"{path[i]}";
+                }
+                else
+                {
+                    localDistance += Vector2.Distance(Points[path[i]], Points[path[i + 1]]);
+                    s += $"{path[i]}, ";
+                }
+            }
+            Debug.Log(s);
+
+            return localDistance;
         }
     }
 }
