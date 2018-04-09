@@ -242,7 +242,7 @@ namespace KurdifyEngine.GA
 #if USE_LOCAL_BEST
             int count = 0;
             int i = 0;
-            while (count < Points.Length)
+            while (count < Points.Length-1)
             {
                 int nextPoint = 1;
                 float dist = -1;
@@ -257,10 +257,10 @@ namespace KurdifyEngine.GA
                         nextPoint = localNextPoint;
                     }
                 }
-
+                
                 BestLocalDistance += dist;
                 pointDone[nextPoint] = true;
-                BestLocalPath[count] = nextPoint;
+                BestLocalPath[count+1] = nextPoint;
                 i = nextPoint;
                 count++;
             }
